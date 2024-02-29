@@ -52,8 +52,11 @@ packages are :
  1. Create a ROS2 workspace and build this package for ROS2 humble
  ```
  # make the workspace
- mkdir rnd_catbot_ros2/src 
- cd rnd_catbot_ros2/src
+ mkdir rnd_catbot_ros2_ws/src 
+ cd rnd_catbot_ros2_ws/src
+
+ # clone repo
+ git clone HERE
   
  # build the pkg
  cd .. 
@@ -61,19 +64,19 @@ packages are :
  ```
  
  2. edit line 41 in hyperdog_ros2/src/hyperdog_launch/launch/hyperdog.launch.py script to configure your serial port.
- 3. go to `rnd_catbot_ros2` directory and build all the packages again
+ 3. go to `rnd_catbot_ros2_ws` directory and build all the packages again
  
  
  # Launching
  source the workspace  
  ```
- source rnd_catbot_ros2/install/setup.bash
+ source rnd_catbot_ros2_ws/install/setup.bash
  ```
  to add workspace source permenently to .bashrc:
   ```
     
     # add source 
-    echo "source /home/$USER/rnd_catbot_ros2/install/setup.bash" >> ~/.bashrc
+    echo "source /home/$USER/rnd_catbot_ros2_ws/install/setup.bash" >> ~/.bashrc
   ```
   
   to launch run following 
