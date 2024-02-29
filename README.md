@@ -56,7 +56,7 @@ packages are :
  cd rnd_catbot_ros2_ws/src
 
  # clone repo
- git clone HERE
+ git clone https://github.com/nicholasl23638/rnd_catbot_ros2.git
   
  # build the pkg
  cd .. 
