@@ -25,7 +25,7 @@ packages are :
             - subscriber : `/joy_node` 
             - publisher : `/hyperdog_joy_ctrl_cmd` using the interface `hyperdog_msgs/msg/JoyCtrlCmd`
 
-  3. **`hyperdog_ctrl`** : This pkg has `Body_motion_planner` and `gait_generater` and creates the nodes `/command_manager_node` and `/IK_node`
+  3. **`hyperdog_ctrl`** : This pkg has `Body_motion_planner` and `gait_generator` and creates the nodes `/command_manager_node` and `/IK_node`
         - `Body_motion_planner` : plans body motions from control commands receive from `/command_manager_node`
         - `gait_generator` : generates gaits acording to the given gait_type command from the Gamepad 
    
@@ -39,7 +39,7 @@ packages are :
   
   4. **`hyperdog_launch`** : This contains the launch file for all the above nodes and `micro_ros_agent`
   
-  5. **`hyperdog_gazebo_sim`** : Gazebo simmulation 
+  5. **`hyperdog_gazebo_sim`** : Gazebo simulation 
   
   6. **`hyperdog_gazebo_joint_cmd`** : this pkg contains the node `/hyperdog_gazebo_joint_cmd` to send joint angles to gazebo
         - Node : `/hyperdog_gazebo_joint_cmd`
@@ -70,6 +70,8 @@ packages are :
  # Launching
  source the workspace  
  ```
+ cd rnd_catbot_ros2_ws
+ . /usr/share/gazebo/setup.sh
  source rnd_catbot_ros2_ws/install/setup.bash
  ```
  to add workspace source permenently to .bashrc:
@@ -83,7 +85,7 @@ packages are :
   ros2 launch hyperdog_launch hyperdog.launch.py
   ```
   
-  to launch gazebo with hyperdog
+  to launch gazebo simulation
   ```
   ros2 launch hyperdog_gazebo_sim hyperdog_gazebo_sim.launch.py
   ```
