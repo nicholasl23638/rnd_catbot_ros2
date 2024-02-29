@@ -74,7 +74,6 @@ packages are :
  ```
  to add workspace source permenently to .bashrc:
   ```
-    
     # add source 
     echo "source /home/$USER/rnd_catbot_ros2_ws/install/setup.bash" >> ~/.bashrc
   ```
