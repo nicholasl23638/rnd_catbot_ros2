@@ -81,7 +81,6 @@ packages are :
   to launch run following 
   ```
   ros2 launch hyperdog_launch hyperdog.launch.py
- 
   ```
   
   to launch gazebo with hyperdog
