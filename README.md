@@ -1,4 +1,4 @@
-# hyperdog_ros2
+# rnd_catbot_ros2
 Adapted [Hyperdog Ros2](https://github.com/NDHANA94/hyperdog_ros2/tree/foxy) code for ros2 humble.
 
 ## Contains
