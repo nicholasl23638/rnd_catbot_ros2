@@ -1,4 +1,5 @@
 import numpy as np
+import rclpy
 import matplotlib.pyplot as plt
 # from time import time
 import time
@@ -510,7 +511,7 @@ class GaitPlanner():
 
 
     def run(self):
-        while True:
+        while rclpy.ok():
             if self.cmd.mode.walk:
                 if self.cmd.mode.gait_type == 1:
                     self.cmd.gait.cycle_time = 0.8

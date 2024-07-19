@@ -1,4 +1,5 @@
 import numpy as np
+import rclpy
 from cmd_manager.hyperdog_variables import Cmds, Body, Leg
 import time
 # cmd = Cmds()
@@ -40,7 +41,7 @@ class BodyMotionPlanner():
         return True
     
     def run(self):
-        while True:
+        while rclpy.ok():
             self.cmd.leg.foot_zero_pnt[:,2] = np.array(self.cmd.body.height) 
             """ uncomment below 2 lines to activate slant from joystick"""
             self.cmd.leg.foot_zero_pnt[:,1] = self.__L1

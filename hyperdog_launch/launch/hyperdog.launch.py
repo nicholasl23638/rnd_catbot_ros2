@@ -37,11 +37,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    hyperdog_gazebo_joint_cmd = ExecuteProcess(
-        cmd=['ros2', 'run', 'hyperdog_gazebo_joint_cmd', 'hyperdog_gazebo_joint_controller'],
-        output='screen'
-    )
-
 
     return LaunchDescription([
         node_joy,
@@ -64,7 +59,10 @@ def generate_launch_description():
                     node_IK_node
                 ]
             )
-        ),
+        )
+
+        ### BELOW IS WHERE WE'LL PUT THE LAUNCH STUFF FOR A REAL ROBOT ###
+
         # RegisterEventHandler(
         #     OnProcessStart(
         #     target_action=node_IK_node,

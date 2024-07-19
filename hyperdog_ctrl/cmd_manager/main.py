@@ -46,7 +46,7 @@ def main(args=None):
         thread_bmp.start()
         thread_gait_planner.start()
         
-        while 1:
+        while rclpy.ok():
             print("tnumber of threads in background: {}".format(threading.active_count()))
             # print("current thread: {}\n".format(threading.current_thread().name))
             # print(cmd.body.height, '----', leg.FR.pose.cur_coord)
