@@ -80,15 +80,15 @@ class PublishingSubscriber : public rclcpp::Node
           t2 = clock();
         }
 
-        // change side_walk_mode <- btn: RJ btn
-        if (!cmd.states[2] && msg_joy->buttons[10] && (clock() - t3 > btn_tgl_delay)){
-          cmd.states[2] = true;
-          t3 = clock();
-        }
-        else if (cmd.states[2] && msg_joy->buttons[10] && (clock() - t3 > btn_tgl_delay )){
-          cmd.states[2] = false;
-          t3 = clock();
-        }
+        // // change side_walk_mode <- btn: RJ btn
+        // if (!cmd.states[2] && msg_joy->buttons[10] && (clock() - t3 > btn_tgl_delay)){
+        //   cmd.states[2] = true;
+        //   t3 = clock();
+        // }
+        // else if (cmd.states[2] && msg_joy->buttons[10] && (clock() - t3 > btn_tgl_delay )){
+        //   cmd.states[2] = false;
+        //   t3 = clock();
+        // }
 
         // select gait <- btn: A, B, X, Y
         if(msg_joy->buttons[0]){
@@ -105,23 +105,23 @@ class PublishingSubscriber : public rclcpp::Node
         }
 
         // set robot height
-        if (cmd.pose.position.z < MIN_HEIGHT)
-          cmd.pose.position.z = MIN_HEIGHT;
-        if(cmd.pose.position.z > MAX_HEIGHT)
-          cmd.pose.position.z = MAX_HEIGHT;
-        if(!msg_joy->buttons[4] && msg_joy->axes[7] > 0 && cmd.pose.position.z < MAX_HEIGHT ){
+        if(msg_joy->axes[7] > 0 && !msg_joy->buttons[4] && cmd.pose.position.z < MAX_HEIGHT ){
           cmd.pose.position.z += 5;
         }
-        if(!msg_joy->buttons[4] && msg_joy->axes[7] < 0 && cmd.pose.position.z > MIN_HEIGHT ){
+        if(msg_joy->axes[7] < 0 && !msg_joy->buttons[4] && cmd.pose.position.z > MIN_HEIGHT ){
           cmd.pose.position.z -= 5;
         }
-
         // if walking mode is on and robot's height is not enough for walking, 
         // increase robot's height and swing step height
         if (cmd.states[1] == true && cmd.pose.position.z < 100){
           cmd.pose.position.z += 5;
           cmd.gait_step.z += 5;
         }
+        // make sure z pos doesn't go past bounds
+        if (cmd.pose.position.z < MIN_HEIGHT)
+          cmd.pose.position.z = MIN_HEIGHT;
+        if(cmd.pose.position.z > MAX_HEIGHT)
+          cmd.pose.position.z = MAX_HEIGHT;
 
         // set step height
         if (cmd.gait_step.z > cmd.pose.position.z - MIN_HEIGHT)
@@ -135,9 +135,9 @@ class PublishingSubscriber : public rclcpp::Node
 
         // set eular angles
         if (!msg_joy->buttons[9] && !LJ_btn_sw){
-          cmd.pose.orientation.x = -msg_joy->axes[0] * ROLL_RANGE;
-          cmd.pose.orientation.y = msg_joy->axes[1] * PITCH_RANGE;
-          cmd.pose.orientation.z = (msg_joy->axes[2] - msg_joy->axes[5])/2 * YAW_RANGE;
+          // cmd.pose.orientation.x = -msg_joy->axes[0] * ROLL_RANGE; // left joy
+          cmd.pose.orientation.y = msg_joy->axes[1] * PITCH_RANGE; // left joy
+          // cmd.pose.orientation.z = (msg_joy->axes[2] - msg_joy->axes[5])/2 * YAW_RANGE; // 2 & 5 are triggers
         }
 
         // set step length x y
@@ -145,30 +145,30 @@ class PublishingSubscriber : public rclcpp::Node
         cmd.gait_step.y = -msg_joy->axes[3] * MAX_STEP_LENGTH_Y;
 
         // set slant
-        if (msg_joy->buttons[9]){
-          LJ_btn_sw = 1;
-          if (cmd.pose.position.x <= SLANT_X_MAX && cmd.pose.position.x >= SLANT_X_MIN){
-            cmd.pose.position.x += msg_joy->axes[1]*5 ;
-          }
-          else if (cmd.pose.position.x < SLANT_X_MIN){
-            cmd.pose.position.x = SLANT_X_MIN;
-          } 
-          else{
-            cmd.pose.position.x = SLANT_X_MAX;
-          }
-          if (cmd.pose.position.y <= SLANT_Y_MAX && cmd.pose.position.y >= SLANT_Y_MIN){
-            cmd.pose.position.y -= msg_joy->axes[0]*5 ;
-          }
-          else if (cmd.pose.position.y < SLANT_Y_MIN){
-            cmd.pose.position.y = SLANT_Y_MIN;
-          } 
-          else{
-            cmd.pose.position.y = SLANT_Y_MAX;
-          }
-        }
-        if (msg_joy->axes[0] == 0 && msg_joy->axes[1] == 0){
-          LJ_btn_sw = 0;
-        }
+        // if (msg_joy->buttons[9]){
+        //   LJ_btn_sw = 1;
+        //   if (cmd.pose.position.x <= SLANT_X_MAX && cmd.pose.position.x >= SLANT_X_MIN){
+        //     cmd.pose.position.x += msg_joy->axes[1]*5 ;
+        //   }
+        //   else if (cmd.pose.position.x < SLANT_X_MIN){
+        //     cmd.pose.position.x = SLANT_X_MIN;
+        //   } 
+        //   else{
+        //     cmd.pose.position.x = SLANT_X_MAX;
+        //   }
+        //   if (cmd.pose.position.y <= SLANT_Y_MAX && cmd.pose.position.y >= SLANT_Y_MIN){
+        //     cmd.pose.position.y -= msg_joy->axes[0]*5 ;
+        //   }
+        //   else if (cmd.pose.position.y < SLANT_Y_MIN){
+        //     cmd.pose.position.y = SLANT_Y_MIN;
+        //   } 
+        //   else{
+        //     cmd.pose.position.y = SLANT_Y_MAX;
+        //   }
+        // }
+        // if (msg_joy->axes[0] == 0 && msg_joy->axes[1] == 0){
+        //   LJ_btn_sw = 0;
+        // }
         
       }
       
