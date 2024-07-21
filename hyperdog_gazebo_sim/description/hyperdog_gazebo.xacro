@@ -1,16 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-<!--
-    _____________________________________________________________________
-        include this file into: /description/hyperdog.urdf.xacro 
-        using following line: 
-                    <xacro:include filename="hyperdog_gazebo.xacro" /> 
-    _____________________________________________________________________ 
-    * Gazebo is unable to use the same <material> tags that are already in the URDF (that RViz uses).
-    Instead, we need to add gazebo tags for our links that refer to Gazebo materials
--->
-
     <xacro:include filename="physics.xacro" /> 
 
     <xacro:macro name="gz_hip">
@@ -31,8 +21,6 @@
         <maxVel>0.01</maxVel>
         <self_collide>1</self_collide>
         <material>Gazebo/Orange</material>
-        <!-- <implicitSpringDamper>1</implicitSpringDamper>
-        <springStiffness>100</springStiffness> -->
     </xacro:macro>
 
     <xacro:macro name="gz_lleg">
@@ -45,8 +33,6 @@
         <self_collide>1</self_collide> 
         <material>Gazebo/DarkYellow</material>
         <minDepth>0.001</minDepth> 
-        <!-- <implicitSpringDamper>1</implicitSpringDamper>
-        <springStiffness>100</springStiffness> -->
     </xacro:macro>
 
     <xacro:macro name="gz_foot">
@@ -67,17 +53,13 @@
 
 
 
-    <!-- body -->
     <gazebo reference="base_link">
         <mu1>0.05</mu1>
         <mu2>0.05</mu2>
-        <!-- <kp>1000000.0</kp>
-        <kd>1.0</kd> -->
         <maxVel>0.01</maxVel>
         <material>Gazebo/DarkGrey  </material>
     </gazebo>
 
-    <!-- hip -->
     <gazebo reference="FR_hip_link">
         <xacro:gz_hip></xacro:gz_hip>
     </gazebo>   
@@ -91,7 +73,6 @@
         <xacro:gz_hip></xacro:gz_hip>
     </gazebo>
 
-    <!-- uleg -->
     <gazebo reference="FR_uleg_link">
         <xacro:gz_uleg></xacro:gz_uleg>
     </gazebo>   
@@ -105,7 +86,6 @@
         <xacro:gz_uleg></xacro:gz_uleg>
     </gazebo>
     
-    <!-- lleg -->
     <gazebo reference="FR_lleg_link">
         <xacro:gz_lleg></xacro:gz_lleg>
     </gazebo>
@@ -119,8 +99,6 @@
         <xacro:gz_lleg></xacro:gz_lleg>
     </gazebo>
 
-
-    <!-- feet -->
     <gazebo reference="FR_foot">
         <xacro:gz_foot></xacro:gz_foot>
     </gazebo>
