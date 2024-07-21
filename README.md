@@ -66,6 +66,17 @@ packages are :
  2. edit line 41 in hyperdog_ros2/src/hyperdog_launch/launch/hyperdog.launch.py script to configure your serial port.
  3. go to `rnd_catbot_ros2_ws` directory and build all the packages again
  
+ # For Gazebo:
+Tested with Gazebo-11
+
+### install dependances
+
+```
+sudo apt install ros-humble-gazebo-*
+sudo apt install ros-humble-control*
+sudo apt install ros-humble-ign-ros2-control*
+
+```
  
  # Launching
  source the workspace  
