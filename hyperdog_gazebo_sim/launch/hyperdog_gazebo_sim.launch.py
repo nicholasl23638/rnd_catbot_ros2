@@ -11,84 +11,120 @@ from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, ExecuteProcess, RegisterEventHandler
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration, PythonExpression
-from launch_ros.actions import Node
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch.event_handlers import OnProcessExit
+from ament_index_python.packages import (get_package_prefix, get_package_share_directory)
+from launch_ros.actions import (Node, SetParameter)
 
 import xacro
- 
+
+# ROS2 Launch System will look for this function definition #
 def generate_launch_description():
+
+  # Get Package Description and Directory #
+  package_description = "hyperdog_gazebo_sim"
+  package_directory = get_package_share_directory(package_description)
+
+  # Set the Path to Robot Mesh Models for Loading in Gazebo Sim #
+  # NOTE: Do this BEFORE launching Gazebo Sim #
+  install_dir_path = (get_package_prefix(package_description) + "/share")
+  robot_meshes_path = os.path.join(package_directory, "meshes")
+  # pkg_models_path = os.path.join(package_directory, "models") # add local models path
+  gazebo_resource_paths = [install_dir_path, robot_meshes_path]
+  if "IGN_GAZEBO_RESOURCE_PATH" in os.environ:
+      for resource_path in gazebo_resource_paths:
+          if resource_path not in os.environ["IGN_GAZEBO_RESOURCE_PATH"]:
+              os.environ["IGN_GAZEBO_RESOURCE_PATH"] += (':' + resource_path)
+  else:
+      os.environ["IGN_GAZEBO_RESOURCE_PATH"] = (':'.join(gazebo_resource_paths))
+
+  # # Load Demo World SDF from Robot Description Package #
+  # world_file = "project_world.sdf"
+  # world_file_path = os.path.join(package_directory, "worlds", world_file)
+  # world_config = LaunchConfiguration("world")
+  # declare_world_arg = DeclareLaunchArgument("world",
+  #                                           default_value=[world_file_path],
+  #                                           description="SDF World File")
+
+  # Load Empty World SDF from Gazebo Sim Package #
+  world_file = "empty.sdf"
+  world_config = LaunchConfiguration("world")
+  declare_world_arg = DeclareLaunchArgument("world",
+                                            default_value=[world_file],
+                                            description="SDF World File")
   
-  # configure robot's urdf file
-  pkg_hyperdog_gazebo = 'hyperdog_gazebo_sim'
-  robot_description_subpath = 'description/hyperdog.urdf.xacro'
-  xacro_file = os.path.join(get_package_share_directory(pkg_hyperdog_gazebo),robot_description_subpath)
-  robot_description_raw = xacro.process_file(xacro_file).toxml()
-
-  #configure gazebo
-  pkg_gazebo_ros = FindPackageShare(package='gazebo_ros').find('gazebo_ros') 
-  pkg_hyperdog_gazebo = FindPackageShare(package='hyperdog_gazebo_sim').find('hyperdog_gazebo_sim')
-
-  # Set the path to the world file
-  world_file_name = 'contact.world'
-  world_path = os.path.join(pkg_hyperdog_gazebo, 'worlds', world_file_name)
-  # world_path = os.path.join(pkg_hyperdog_gazebo, 'worlds', 'contact.world')
-
-  # world_path = "/usr/share/gazebo-11/worlds/friction_demo.world"
-  # Set the path to the SDF model files.
-  gazebo_models_path = os.path.join(pkg_hyperdog_gazebo, 'models')
-  os.environ["GAZEBO_MODEL_PATH"] = gazebo_models_path
-
-  # configure hyperdog teleop
-  teleop_pkg_name = 'hyperdog_teleop'
-  teleop_launch_file = "/hyperdog_teleop.launch.py"
-
-  # set the controller
-  gazebo_controller = 'hyperdog_joint_controller'
-
-  headless = LaunchConfiguration('headless')
-  use_sim_time = LaunchConfiguration('use_sim_time')
-  use_simulator = LaunchConfiguration('use_simulator')
-  world = LaunchConfiguration('world')
- 
-  declare_simulator_cmd = DeclareLaunchArgument(
-    name='headless',
-    default_value='False',
-    description='Whether to execute gzclient')
-     
-  declare_use_sim_time_cmd = DeclareLaunchArgument(
-    name='use_sim_time',
-    default_value='true',
-    description='Use simulation (Gazebo) clock if true')
- 
-  declare_use_simulator_cmd = DeclareLaunchArgument(
-    name='use_simulator',
-    default_value='True',
-    description='Whether to start the simulator')
- 
-  declare_world_cmd = DeclareLaunchArgument(
-    name='world',
-    default_value= 'empty.world', #world_path, TODO HERE 'empty.world',
-    description='Full path to the world model file to load')
-
-  declare_robot_state_publisher = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        output='screen',
-        parameters=[{'robot_description':robot_description_raw,
-                    'use_sim_time':True}])
-  
-  hyperdog_gz_joint_ctrl_node = Node(
-    package='hyperdog_gazebo_sim',
-    executable='hyperdog_gazebo_joint_ctrl_node',
-    output='screen'
+  # Declare GazeboSim Launch #
+  gzsim_pkg = get_package_share_directory("ros_gz_sim")
+  gz_sim = IncludeLaunchDescription(
+      PythonLaunchDescriptionSource(
+          PathJoinSubstitution([gzsim_pkg, "launch", "gz_sim.launch.py"])),
+          launch_arguments={"gz_args": world_config}.items(),
   )
-    
-  spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py', 
-                    arguments=['-topic', 'robot_description',
-                               '-entity', 'HyperDog'],
-                    output='screen')
+
+  # Load URDF File #
+  urdf_file = 'hyperdog.urdf.xacro'
+  robot_desc_path = os.path.join(package_directory, "description", urdf_file)
+  print("URDF Loaded !")
+
+  # Robot State Publisher (RSP) #
+  robot_state_publisher_node = Node(
+      package='robot_state_publisher',
+      executable='robot_state_publisher',
+      name='robot_state_publisher_node',
+      output="screen",
+      emulate_tty=True,
+      parameters=[{'use_sim_time': True, 
+                    'robot_description': Command(['xacro ', robot_desc_path])}]
+  )
+
+  # Spawn the Robot #
+  declare_spawn_model_name = DeclareLaunchArgument("model_name", default_value="HyperDog",
+                                                    description="Model Spawn Name")
+  declare_spawn_x = DeclareLaunchArgument("x", default_value="-4.0",
+                                          description="Model Spawn X Axis Value")
+  declare_spawn_y = DeclareLaunchArgument("y", default_value="0.0",
+                                          description="Model Spawn Y Axis Value")
+  declare_spawn_z = DeclareLaunchArgument("z", default_value="0.05",
+                                          description="Model Spawn Z Axis Value")
+  gz_spawn_entity = Node(
+      package="ros_gz_sim",
+      executable="create",
+      name="my_robot_spawn",
+      arguments=[
+          "-name", LaunchConfiguration("model_name"),
+          "-allow_renaming", "true",
+          "-topic", "robot_description",
+          "-x", LaunchConfiguration("x"),
+          "-y", LaunchConfiguration("y"),
+          "-z", LaunchConfiguration("z"),
+      ],
+      output="screen",
+  )
+
+  # ROS-Gazebo Bridge #
+  ign_bridge = Node(
+      package="ros_gz_bridge",
+      executable="parameter_bridge",
+      name="ign_bridge",
+      arguments=[
+          "/clock" + "@rosgraph_msgs/msg/Clock" + "[ignition.msgs.Clock",
+          "/cmd_vel" + "@geometry_msgs/msg/Twist" + "@ignition.msgs.Twist",
+          # "/tf" + "@tf2_msgs/msg/TFMessage" + "[ignition.msgs.Pose_V",
+          # "/odom" + "@nav_msgs/msg/Odometry" + "[ignition.msgs.Odometry",
+          # "/scan" + "@sensor_msgs/msg/LaserScan" + "[ignition.msgs.LaserScan",
+          # "/imu" + "@sensor_msgs/msg/Imu" + "[ignition.msgs.IMU",
+      ],
+      remappings=[
+          # there are no remappings for this robot description
+      ],
+      output="screen",
+  )
+
+  hyperdog_gz_joint_ctrl_node = Node(
+      package='hyperdog_gazebo_sim',
+      executable='hyperdog_gazebo_joint_ctrl_node',
+      output='screen')
 
   load_joint_state_controller = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
@@ -101,48 +137,32 @@ def generate_launch_description():
         output='screen'
     )
 
-
-
-  # Specify the actions
-  # Start Gazebo server
-  start_gazebo_server_cmd = IncludeLaunchDescription(
-    PythonLaunchDescriptionSource(os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')),
-    condition=IfCondition(use_simulator),
-    launch_arguments={'world': world}.items())
- 
-  # Start Gazebo client    
-  start_gazebo_client_cmd = IncludeLaunchDescription(
-    PythonLaunchDescriptionSource(os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')),
-    condition=IfCondition(PythonExpression([use_simulator, ' and not ', headless])))
- 
-
-  # Create the launch description and populate
-  return  LaunchDescription([    
-
-    RegisterEventHandler(
-      event_handler=OnProcessExit(
-        target_action=spawn_entity,
-        on_exit=[load_joint_state_controller],
-      )
-    ),
-    RegisterEventHandler(
-      event_handler=OnProcessExit(
-        target_action=load_joint_state_controller,
-        on_exit=[load_forward_command_controller],
-      )
-    ),
-    declare_simulator_cmd,
-    declare_use_sim_time_cmd,
-    declare_use_simulator_cmd,
-    declare_world_cmd,
-
-    start_gazebo_server_cmd,
-    start_gazebo_client_cmd,
-
-    spawn_entity,
-    declare_robot_state_publisher,
-    # load_joint_state_controller,
-    # laod_forward_command_controller,
-    hyperdog_gz_joint_ctrl_node,
-  
- ])
+  # Create and Return the Launch Description Object #
+  return LaunchDescription(
+      [
+          RegisterEventHandler(
+            event_handler=OnProcessExit(
+              target_action=gz_spawn_entity,
+              on_exit=[load_joint_state_controller],
+            )
+          ),
+          RegisterEventHandler(
+            event_handler=OnProcessExit(
+              target_action=load_joint_state_controller,
+              on_exit=[load_forward_command_controller],
+            )
+          ),
+          declare_world_arg,
+          # Sets use_sim_time for all nodes started below (doesn't work for nodes started from ignition gazebo) #
+          SetParameter(name="use_sim_time", value=True),
+          gz_sim,
+          robot_state_publisher_node,
+          declare_spawn_model_name,
+          declare_spawn_x,
+          declare_spawn_y,
+          declare_spawn_z,
+          gz_spawn_entity,
+          ign_bridge,
+          hyperdog_gz_joint_ctrl_node,
+      ]
+  )

@@ -11,6 +11,9 @@
   <build_depend>hyperdog_msgs</build_depend>
   <exec_depend>hyperdog_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_image</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
@@ -18,6 +21,9 @@
   <export>
     <build_type>ament_cmake</build_type>
     <depend>rclcpp</depend>
+    <depend>ros_gz_bridge</depend>
+    <depend>ros_gz_image</depend>
+    <depend>ros_gz_sim</depend>
     <depend>std_msgs</depend>
     <depend>hyperdog_msgs</depend>
     <depend>nav_msgs</depend>
