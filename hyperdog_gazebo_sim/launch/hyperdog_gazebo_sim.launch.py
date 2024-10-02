@@ -48,36 +48,13 @@ def generate_launch_description():
     # SETTING UP GAZEBO #
     gzsim_pkg = get_package_share_directory("ros_gz_sim")
 
-    # Spawn the Robot #
-    declare_spawn_model_name = DeclareLaunchArgument("model_name", default_value="HyperDog",
-                                                     description="Model Spawn Name")
-    declare_spawn_x = DeclareLaunchArgument("x", default_value="0.0",
-                                            description="Model Spawn X Axis Value")
-    declare_spawn_y = DeclareLaunchArgument("y", default_value="0.0",
-                                            description="Model Spawn Y Axis Value")
-    declare_spawn_z = DeclareLaunchArgument("z", default_value="0.0",
-                                            description="Model Spawn Z Axis Value")
-    
-    # Setup to launch the simulator and Gazebo world
-    gz_sim = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(gzsim_pkg, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': 'empty.sdf'}.items(),
-    )
-
     gz_spawn_entity = Node(
-        package="ros_gz_sim",
-        executable="create",
-        name="dingus_robot_spawn",
-        arguments=[
-            "-name", LaunchConfiguration("model_name"),
-            "-allow_renaming", "true",
-            "-topic", "robot_description",
-            "-x", LaunchConfiguration("x"),
-            "-y", LaunchConfiguration("y"),
-            "-z", LaunchConfiguration("z"),
-        ],
-        output="screen",
+        package='ros_gz_sim',
+        executable='create',
+        output='screen',
+        arguments=['-string', Command(['xacro ', robot_desc_path]),
+                   '-name', 'Hyperdog',
+                   '-allow_renaming', 'true'],
     )
 
     # SETTING UP ROBOT #
@@ -97,7 +74,7 @@ def generate_launch_description():
         executable='hyperdog_gazebo_joint_ctrl_node',
         output='screen')
 
-    load_joint_state_controller = ExecuteProcess(
+    load_joint_state_broadcaster = ExecuteProcess(
             cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
                 'joint_state_broadcaster'],
             output='screen' )
@@ -130,28 +107,29 @@ def generate_launch_description():
     # Create and Return the Launch Description Object #
     return LaunchDescription(
         [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    [os.path.join(get_package_share_directory('ros_ign_gazebo'),
+                                'launch', 'ign_gazebo.launch.py')]),
+                launch_arguments=[('gz_args', [' -r -v 4 empty.sdf'])]
+            ),
             RegisterEventHandler(
                 event_handler=OnProcessExit(
-                target_action=gz_spawn_entity,
-                on_exit=[load_joint_state_controller],
+                    target_action=gz_spawn_entity,
+                    on_exit=[load_joint_state_broadcaster],
                 )
             ),
             RegisterEventHandler(
                 event_handler=OnProcessExit(
-                target_action=load_joint_state_controller,
-                on_exit=[load_forward_command_controller],
+                    target_action=load_joint_state_broadcaster,
+                    on_exit=[load_forward_command_controller],
                 )
             ),
             # Sets use_sim_time for all nodes started below (doesn't work for nodes started from ignition gazebo) #
             SetParameter(name="use_sim_time", value=True),
-            gz_sim,
             robot_state_publisher_node,
-            declare_spawn_model_name,
-            declare_spawn_x,
-            declare_spawn_y,
-            declare_spawn_z,
             gz_spawn_entity,
+            # hyperdog_gz_joint_ctrl_node,
             ign_bridge,
-            hyperdog_gz_joint_ctrl_node,
         ]
     )
